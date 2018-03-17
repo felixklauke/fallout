@@ -34,7 +34,7 @@ public class DataSourceProvider implements Provider<DataSource> {
 
     private void createTables() {
         try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement preparedStatement = connection.prepareStatement("create table fallout_kingdoms (\n" +
+            PreparedStatement preparedStatement = connection.prepareStatement("create table if not exists fallout_kingdoms (\n" +
                     "  id          int auto_increment primary key,\n" +
                     "  uniqueId    varchar(36)  not null,\n" +
                     "  name        varchar(16)  not null,\n" +
