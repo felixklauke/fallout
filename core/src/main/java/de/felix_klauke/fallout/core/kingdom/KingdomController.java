@@ -13,6 +13,10 @@ public interface KingdomController {
 
     void getKingdomHoldings(UUID kingdomUniqueId, Consumer<Set<KingdomLandHolding>> consumer);
 
+    void addKingdomHolding(UUID kingdomUniqueId, String worldName, int x, int z, Consumer<Boolean> consumer);
+
+    void removeKingdomHolding(UUID kingdomUniqueId, String worldName, int x, int z, Consumer<Boolean> consumer);
+
     void createKingdom(UUID uniqueId, UUID ownerUniqueId, String name, String description, Consumer<Boolean> resultConsumer);
 
     void removeKingdom(UUID uniqueId, Consumer<Boolean> result);

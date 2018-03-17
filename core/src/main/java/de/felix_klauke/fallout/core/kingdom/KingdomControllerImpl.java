@@ -30,6 +30,8 @@ public class KingdomControllerImpl implements KingdomController {
     private static final String QUERY_GET_KINGDOM_MEMBERS = "SELECT `uniqueId`, `rankId` FROM fallout_kingdom_members WHERE `kingdomUniqueId` = ?";
     private static final String QUERY_GET_KINGDOM_BY_MEMBER_UUID = "SELECT fallout_kingdoms.`uniqueId`, fallout_kingdoms.`name`, fallout_kingdoms.`description` FROM fallout_kingdom_members INNER JOIN fallout_kingdoms ON fallout_kingdoms.`uniqueId` = fallout_kingdom_members.`kingdomUniqueId` WHERE fallout_kingdom_members.`uniqueId` = ?";
     private static final String QUERY_UPDATE_MEMBER_RANK = "UPDATE fallout_kingdom_members SET rankId = ? WHERE uniqueId = ?";
+    private static final String QUERY_REMOVE_HOLDING_FROM_KINGDOM = "DELETE FROM fallout_land_holdings WHERE `world` = ? AND `posX` = ? AND `posZ` = ? AND `kindomUniqueId` = ?";
+    private static final String QUERY_ADD_HOLDING_TO_KINGDOM = "INSERT INTO fallout_land_holdings (`world`, `posX`, `posZ`, `kindomUniqueId`) VALUES (?, ?, ?, ?)";
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final DataSource dataSource;
@@ -88,6 +90,42 @@ public class KingdomControllerImpl implements KingdomController {
             }
 
             consumer.accept(holdings);
+        });
+    }
+
+    @Override
+    public void addKingdomHolding(UUID kingdomUniqueId, String worldName, int x, int z, Consumer<Boolean> consumer) {
+        executorService.submit(() -> {
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_ADD_HOLDING_TO_KINGDOM)) {
+                preparedStatement.setString(1, worldName);
+                preparedStatement.setInt(2, x);
+                preparedStatement.setInt(3, z);
+                preparedStatement.setString(4, kingdomUniqueId.toString());
+
+                int changedRows = preparedStatement.executeUpdate();
+
+                consumer.accept(changedRows > 0);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    @Override
+    public void removeKingdomHolding(UUID kingdomUniqueId, String worldName, int x, int z, Consumer<Boolean> consumer) {
+        executorService.submit(() -> {
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_REMOVE_HOLDING_FROM_KINGDOM)) {
+                preparedStatement.setString(1, worldName);
+                preparedStatement.setInt(2, x);
+                preparedStatement.setInt(3, z);
+                preparedStatement.setString(4, kingdomUniqueId.toString());
+
+                int changedRows = preparedStatement.executeUpdate();
+
+                consumer.accept(changedRows > 0);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         });
     }
 
