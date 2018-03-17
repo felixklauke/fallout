@@ -7,12 +7,19 @@ import java.util.Objects;
  */
 public class SimpleKingdomLandHolding implements KingdomLandHolding {
 
+    private final String worldName;
     private final int x;
     private final int z;
 
-    SimpleKingdomLandHolding(int x, int z) {
+    SimpleKingdomLandHolding(String worldName, int x, int z) {
+        this.worldName = worldName;
         this.x = x;
         this.z = z;
+    }
+
+    @Override
+    public String getWorldName() {
+        return worldName;
     }
 
     @Override

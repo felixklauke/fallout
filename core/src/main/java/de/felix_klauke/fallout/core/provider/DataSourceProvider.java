@@ -53,11 +53,12 @@ public class DataSourceProvider implements Provider<DataSource> {
                     "(\n" +
                     "  id             int auto_increment\n" +
                     "    primary key,\n" +
-                    "  posX           int         not null,\n" +
-                    "  posZ           int         not null,\n" +
-                    "  kindomUniqueId varchar(36) not null\n" +
+                    "  world          varchar(255) not null,\n" +
+                    "  posX           int          not null,\n" +
+                    "  posZ           int          not null,\n" +
+                    "  kindomUniqueId varchar(36)  not null\n" +
                     ")\n" +
-                    "  engine = InnoDB;");
+                    "  engine = InnoDB");
             preparedStatement.executeUpdate();
             preparedStatement.close();
         } catch (SQLException e) {

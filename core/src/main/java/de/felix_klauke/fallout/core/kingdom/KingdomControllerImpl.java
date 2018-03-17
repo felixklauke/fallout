@@ -70,7 +70,8 @@ public class KingdomControllerImpl implements KingdomController {
                 ResultSet resultSet = preparedStatement.executeQuery();
 
                 while (resultSet.next()) {
-                    KingdomLandHolding holding = new SimpleKingdomLandHolding(resultSet.getInt("posX"), resultSet.getInt("posZ"));
+                    KingdomLandHolding holding = new SimpleKingdomLandHolding(resultSet.getString("worldName"),
+                            resultSet.getInt("posX"), resultSet.getInt("posZ"));
                     holdings.add(holding);
                 }
 
@@ -116,11 +117,6 @@ public class KingdomControllerImpl implements KingdomController {
 
     @Override
     public void getKingdom(UUID playerUniqueId, Consumer<Kingdom> kingdomConsumer) {
-
-    }
-
-    @Override
-    public void getKingdom(int x, int z, Consumer<Kingdom> kingdomConsumer) {
 
     }
 

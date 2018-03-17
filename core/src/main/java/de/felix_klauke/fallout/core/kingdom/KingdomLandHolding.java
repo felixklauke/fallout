@@ -5,6 +5,8 @@ package de.felix_klauke.fallout.core.kingdom;
  */
 public interface KingdomLandHolding {
 
+    String getWorldName();
+
     int getX();
 
     int getZ();
