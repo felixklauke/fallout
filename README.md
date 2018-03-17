@@ -3,25 +3,32 @@ Hassle free and robust minecraft city build engine ready to bring action in your
 
 # API Example
 
-1. Obtain application instance:
+## 1. Obtain application instance:
 ```java
 FalloutSpigotPlugin falloutPlugin = Bukkit.getPluginManager().getPlugin("fallout");
 FalloutSpigotApplication falloutApplication = falloutPlugin.getFalloutApplication();
 ```
 
-2. Get specific controller:
-1. Obtain application instance:
+## 2. Get specific controller:
+
 ```java
 KingdomController kingdomController = falloutApplication.getKingdomController();
-kingdomController.createKingdom(UUID.randomUUID(), "NiceKingdom", "Nice Kingdom", new Consumer<Boolean>() {
-        @Override
-        public void accept(Boolean success) {
-            if (success) {
-                // Created!
-                return;
-            }
+```
 
-            // Not created ;(
-        }
-    });
+## 3. Execute some cool actions.
+
+_Creating a kingdom:_
+
+```java
+UUID kingdomUniqueId = UUID.randomUUID();
+UUID playerUniqueId = UUID.randomUUID();
+String kingdomName = "CoolKingdom";
+String kingdomDescription = "Another cool kingdom";
+
+kingdomController.createKingdom(kingdomUniqueId, playerUniqueId, kingdomName, kingdomDescription, worldName, chunkX, chunkZ, new Consumer<Boolean>() {
+    @Override
+    public void accept(Boolean result) {
+        // callback
+    }
+});
 ```
