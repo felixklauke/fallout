@@ -5,4 +5,7 @@ package de.felix_klauke.fallout.spigot;
  */
 public interface FalloutSpigotApplication {
 
+    void initialize();
+
+    void destroy();
 }

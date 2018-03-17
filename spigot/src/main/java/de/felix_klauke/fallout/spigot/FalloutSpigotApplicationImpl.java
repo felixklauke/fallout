@@ -15,4 +15,14 @@ public class FalloutSpigotApplicationImpl implements FalloutSpigotApplication {
     public FalloutSpigotApplicationImpl(KingdomController kingdomController) {
         this.kingdomController = kingdomController;
     }
+
+    @Override
+    public void initialize() {
+
+    }
+
+    @Override
+    public void destroy() {
+
+    }
 }

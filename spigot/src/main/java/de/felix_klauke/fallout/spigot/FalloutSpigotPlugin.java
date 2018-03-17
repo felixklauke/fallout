@@ -1,6 +1,7 @@
 package de.felix_klauke.fallout.spigot;
 
 import com.google.inject.Guice;
+import com.google.inject.Injector;
 import de.felix_klauke.fallout.spigot.module.FalloutSpigotModule;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -13,12 +14,14 @@ public class FalloutSpigotPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-
+        falloutSpigotApplication.destroy();
     }
 
     @Override
     public void onEnable() {
-        Guice.createInjector(new FalloutSpigotModule(this));
+        Injector injector = Guice.createInjector(new FalloutSpigotModule(this));
+        falloutSpigotApplication = injector.getInstance(FalloutSpigotApplication.class);
+        falloutSpigotApplication.initialize();
     }
 
     public FalloutSpigotApplication getFalloutApplication() {
