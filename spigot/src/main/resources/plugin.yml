@@ -1,0 +1,3 @@
+name: Fallout
+version: 1.0-SNAPSHOT
+main: de.felix_klauke.fallout.spigot.FalloutSpigotPlugin
