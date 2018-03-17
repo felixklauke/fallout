@@ -19,6 +19,8 @@ public class FalloutSpigotPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        saveDefaultConfig();
+
         Injector injector = Guice.createInjector(new FalloutSpigotModule(this));
         falloutSpigotApplication = injector.getInstance(FalloutSpigotApplication.class);
         falloutSpigotApplication.initialize();
