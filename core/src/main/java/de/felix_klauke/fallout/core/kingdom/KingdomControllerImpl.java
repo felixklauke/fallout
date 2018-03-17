@@ -29,6 +29,7 @@ public class KingdomControllerImpl implements KingdomController {
     private static final String QUERY_GET_KINGDOM_MEMBER = "SELECT `rankId` FROM fallout_kingdom_members WHERE `uniqueId` = ? AND `kingdomUniqueId` = ?";
     private static final String QUERY_GET_KINGDOM_MEMBERS = "SELECT `uniqueId`, `rankId` FROM fallout_kingdom_members WHERE `kingdomUniqueId` = ?";
     private static final String QUERY_GET_KINGDOM_BY_MEMBER_UUID = "SELECT fallout_kingdoms.`uniqueId`, fallout_kingdoms.`name`, fallout_kingdoms.`description` FROM fallout_kingdom_members INNER JOIN fallout_kingdoms ON fallout_kingdoms.`uniqueId` = fallout_kingdom_members.`kingdomUniqueId` WHERE fallout_kingdom_members.`uniqueId` = ?";
+    private static final String QUERY_UPDATE_MEMBER_RANK = "UPDATE fallout_kingdom_members SET rankId = ? WHERE uniqueId = ?";
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final DataSource dataSource;
@@ -106,7 +107,7 @@ public class KingdomControllerImpl implements KingdomController {
                 }
 
                 addMemberToKingdom(uniqueId, ownerUniqueId, 0, aBoolean -> {
-  
+
                 });
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -215,6 +216,21 @@ public class KingdomControllerImpl implements KingdomController {
                 ResultSet resultSet = preparedStatement.executeQuery();
                 result.accept(resultSet.next());
                 resultSet.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    @Override
+    public void updateMemberRank(UUID playerUniqueId, int rankId, Consumer<Boolean> consumer) {
+        executorService.submit(() -> {
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_UPDATE_MEMBER_RANK)) {
+                preparedStatement.setInt(1, rankId);
+                preparedStatement.setString(2, playerUniqueId.toString());
+
+                int rows = preparedStatement.executeUpdate();
+                consumer.accept(rows > 0);
             } catch (SQLException e) {
                 e.printStackTrace();
             }

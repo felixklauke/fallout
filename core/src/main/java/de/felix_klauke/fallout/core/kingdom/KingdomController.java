@@ -27,5 +27,7 @@ public interface KingdomController {
 
     void isKingdomMember(UUID kingdomUniqueId, UUID playerUniqueId, Consumer<Boolean> result);
 
+    void updateMemberRank(UUID playerUniqueId, int rankId, Consumer<Boolean> consumer);
+
     void getKingdom(String worldName, int x, int z, Consumer<Kingdom> kingdomConsumer);
 }
