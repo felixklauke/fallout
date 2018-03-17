@@ -21,6 +21,8 @@ public interface KingdomController {
 
     void addMemberToKingdom(UUID kingdomUniqueId, UUID playerUniqueId, int rankId);
 
+    void getKingdomMembers(UUID kingdomUniqueId, Consumer<Set<KingdomMember>> consumer);
+
     void removeMemberFromKingdom(UUID kingdomUniqueId, UUID playerUniqueId);
 
     void isKingdomMember(UUID kingdomUniqueId, UUID playerUniqueId, Consumer<Boolean> result);

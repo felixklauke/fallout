@@ -26,7 +26,9 @@ public class KingdomControllerImpl implements KingdomController {
     private static final String QUERY_GET_KINGDOM_BY_LOCATION = "SELECT fallout_kingdoms.`uniqueId`, fallout_kingdoms.`description`, fallout_kingdoms.`name` FROM fallout_land_holdings INNER JOIN fallout_kingdoms ON fallout_land_holdings.kindomUniqueId = fallout_kingdoms.uniqueId WHERE fallout_land_holdings.world = ? AND fallout_land_holdings.posX = ? AND fallout_land_holdings.posZ = ?";
     private static final String QUERY_ADD_MEMBER_TO_KINGDOM = "INSERT INTO fallout_kingdom_members (`uniqueId`, `kingdomUniqueId`, `rankId`) VALUES (?, ?, ?)";
     private static final String QUERY_REMOVE_MEMBER_FROM_KINGDOM = "DELETE FROM fallout_kingdom_members WHERE `uniqueId` = ? AND `kingdomUniqueId` = ?";
-    private static final String QUERY_GET_KINGDOM_MEMBER = "SELECT rankId FROM fallout_kingdom_members WHERE `uniqueId` = ? AND `kingdomUniqueId` = ?";
+    private static final String QUERY_GET_KINGDOM_MEMBER = "SELECT `rankId` FROM fallout_kingdom_members WHERE `uniqueId` = ? AND `kingdomUniqueId` = ?";
+    private static final String QUERY_GET_KINGDOM_MEMBERS = "SELECT `uniqueId`, `rankId` FROM fallout_kingdom_members WHERE `kingdomUniqueId` = ?";
+    private static final String QUERY_GET_KINGDOM_BY_MEMBER_UUID = "SELECT fallout_kingdoms.`uniqueId`, fallout_kingdoms.`name`, fallout_kingdoms.`description` FROM fallout_kingdom_members INNER JOIN fallout_kingdoms ON fallout_kingdoms.`uniqueId` = fallout_kingdom_members.`kingdomUniqueId` WHERE fallout_kingdom_members.`uniqueId` = ?";
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final DataSource dataSource;
@@ -127,7 +129,23 @@ public class KingdomControllerImpl implements KingdomController {
 
     @Override
     public void getKingdom(UUID playerUniqueId, Consumer<Kingdom> kingdomConsumer) {
+        executorService.submit(() -> {
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_GET_KINGDOM_BY_MEMBER_UUID)) {
+                preparedStatement.setString(1, playerUniqueId.toString());
 
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                if (!resultSet.next()) {
+                    kingdomConsumer.accept(null);
+                    return;
+                }
+
+                Kingdom kingdom = new SimpleKingdom(UUID.fromString(resultSet.getString("uniqueId")), resultSet.getString("name"), resultSet.getString("description"));
+                kingdomConsumer.accept(kingdom);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     @Override
@@ -142,6 +160,30 @@ public class KingdomControllerImpl implements KingdomController {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+        });
+    }
+
+    @Override
+    public void getKingdomMembers(UUID kingdomUniqueId, Consumer<Set<KingdomMember>> consumer) {
+        executorService.submit(() -> {
+            Set<KingdomMember> kingdomMembers = Sets.newHashSet();
+
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_GET_KINGDOM_MEMBERS)) {
+                preparedStatement.setString(1, kingdomUniqueId.toString());
+
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                while (resultSet.next()) {
+                    KingdomMember kingdomMember = new SimpleKingdomMember(UUID.fromString(resultSet.getString("uniqueId")), kingdomUniqueId, resultSet.getInt("rankId"));
+                    kingdomMembers.add(kingdomMember);
+                }
+
+                resultSet.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            consumer.accept(kingdomMembers);
         });
     }
 
