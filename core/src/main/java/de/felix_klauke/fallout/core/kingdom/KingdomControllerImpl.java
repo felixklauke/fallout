@@ -130,7 +130,7 @@ public class KingdomControllerImpl implements KingdomController {
     }
 
     @Override
-    public void createKingdom(UUID uniqueId, UUID ownerUniqueId, String name, String description, Consumer<Boolean> resultConsumer) {
+    public void createKingdom(UUID uniqueId, UUID ownerUniqueId, String name, String description, String worldName, int x, int z, Consumer<Boolean> resultConsumer) {
         executorService.submit(() -> {
             try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_CREATE_KINGDOM)) {
                 preparedStatement.setString(1, uniqueId.toString());
@@ -145,6 +145,10 @@ public class KingdomControllerImpl implements KingdomController {
                 }
 
                 addMemberToKingdom(uniqueId, ownerUniqueId, 0, aBoolean -> {
+
+                });
+
+                addKingdomHolding(uniqueId, worldName, x, z, aBoolean -> {
 
                 });
             } catch (SQLException e) {

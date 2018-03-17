@@ -58,8 +58,9 @@ public class FalloutSpigotApplicationImpl implements FalloutSpigotApplication {
 
     @Override
     public void handleKingdomCreatePerformed(Player player, String kingdomName) {
-        kingdomController.createKingdom(UUID.randomUUID(), kingdomName, "Just another random kingdom.", success -> {
-            if (!success) {
+        Location location = player.getLocation();
+        kingdomController.createKingdom(UUID.randomUUID(), player.getUniqueId(), kingdomName, "Just another random kingdom.", location.getWorld().getName(), location.getChunk().getX(), location.getChunk().getZ(), success -> {
+            if (success) {
                 player.sendMessage("Ein Fehler ist aufgetreten.");
                 return;
             }

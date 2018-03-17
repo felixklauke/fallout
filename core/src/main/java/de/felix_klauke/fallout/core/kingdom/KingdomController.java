@@ -17,7 +17,7 @@ public interface KingdomController {
 
     void removeKingdomHolding(UUID kingdomUniqueId, String worldName, int x, int z, Consumer<Boolean> consumer);
 
-    void createKingdom(UUID uniqueId, UUID ownerUniqueId, String name, String description, Consumer<Boolean> resultConsumer);
+    void createKingdom(UUID uniqueId, UUID ownerUniqueId, String name, String description, String worldName, int x, int z, Consumer<Boolean> resultConsumer);
 
     void removeKingdom(UUID uniqueId, Consumer<Boolean> result);
 
