@@ -48,6 +48,18 @@ public class DataSourceProvider implements Provider<DataSource> {
                     ") engine = InnoDB;");
             preparedStatement.executeUpdate();
             preparedStatement.close();
+
+            preparedStatement = connection.prepareStatement("create table if not exists fallout_land_holdings\n" +
+                    "(\n" +
+                    "  id             int auto_increment\n" +
+                    "    primary key,\n" +
+                    "  posX           int         not null,\n" +
+                    "  posZ           int         not null,\n" +
+                    "  kindomUniqueId varchar(36) not null\n" +
+                    ")\n" +
+                    "  engine = InnoDB;");
+            preparedStatement.executeUpdate();
+            preparedStatement.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }

@@ -1,5 +1,6 @@
 package de.felix_klauke.fallout.core.kingdom;
 
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -9,6 +10,8 @@ import java.util.function.Consumer;
 public interface KingdomController {
 
     void getKingdom(String name, Consumer<Kingdom> kingdomConsumer);
+
+    void getKingdomHoldings(UUID kingdomUniqueId, Consumer<Set<KingdomLandHolding>> consumer);
 
     void createKingdom(UUID uniqueId, String name, String description, Consumer<Boolean> resultConsumer);
 

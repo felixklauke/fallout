@@ -1,11 +1,14 @@
 package de.felix_klauke.fallout.core.kingdom;
 
+import com.google.common.collect.Sets;
+
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,6 +22,7 @@ public class KingdomControllerImpl implements KingdomController {
     private static final String QUERY_GET_KINGDOM_BY_NAME = "SELECT `uniqueId`, `description` FROM fallout_kingdoms WHERE fallout_kingdoms.`name` = ?";
     private static final String QUERY_CREATE_KINGDOM = "INSERT INTO fallout_kingdoms (`uniqueId`, `name`, `description`) VALUES (?, ?, ?)";
     private static final String QUERY_DELETE_KINGDOM_BY_UUID = "DELETE FROM fallout_kingdoms WHERE `uniqueId` = ?";
+    private static final String QUERY_GET_LAND_HOLDINGS_BY_KINGDOM_UUID = "SELECT `posX`, `posZ` FROM fallout_land_holdings WHERE `kindomUniqueId` = ?";
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final DataSource dataSource;
@@ -26,21 +30,6 @@ public class KingdomControllerImpl implements KingdomController {
     @Inject
     public KingdomControllerImpl(DataSource dataSource) {
         this.dataSource = dataSource;
-    }
-
-    public static void main(String[] args) {
-        KingdomControllerImpl kingdomController = new KingdomControllerImpl(null);
-        kingdomController.createKingdom(UUID.randomUUID(), "NiceKingdom", "Nice Kingdom", new Consumer<Boolean>() {
-            @Override
-            public void accept(Boolean success) {
-                if (success) {
-                    // Created!
-                    return;
-                }
-
-                // Not created ;(
-            }
-        });
     }
 
     @Override
@@ -66,6 +55,31 @@ public class KingdomControllerImpl implements KingdomController {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+        });
+    }
+
+    @Override
+    public void getKingdomHoldings(UUID kingdomUniqueId, Consumer<Set<KingdomLandHolding>> consumer) {
+        executorService.submit(() -> {
+            Set<KingdomLandHolding> holdings = Sets.newHashSet();
+
+            try (Connection connection = dataSource.getConnection();
+                 PreparedStatement preparedStatement = connection.prepareStatement(QUERY_GET_LAND_HOLDINGS_BY_KINGDOM_UUID)) {
+                preparedStatement.setString(1, kingdomUniqueId.toString());
+
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                while (resultSet.next()) {
+                    KingdomLandHolding holding = new SimpleKingdomLandHolding(resultSet.getInt("posX"), resultSet.getInt("posZ"));
+                    holdings.add(holding);
+                }
+
+                resultSet.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            consumer.accept(holdings);
         });
     }
 
