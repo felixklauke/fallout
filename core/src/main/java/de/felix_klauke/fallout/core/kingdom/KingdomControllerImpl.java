@@ -24,6 +24,9 @@ public class KingdomControllerImpl implements KingdomController {
     private static final String QUERY_DELETE_KINGDOM_BY_UUID = "DELETE FROM fallout_kingdoms WHERE `uniqueId` = ?";
     private static final String QUERY_GET_LAND_HOLDINGS_BY_KINGDOM_UUID = "SELECT `world`, `posX`, `posZ` FROM fallout_land_holdings WHERE `kindomUniqueId` = ?";
     private static final String QUERY_GET_KINGDOM_BY_LOCATION = "SELECT fallout_kingdoms.`uniqueId`, fallout_kingdoms.`description`, fallout_kingdoms.`name` FROM fallout_land_holdings INNER JOIN fallout_kingdoms ON fallout_land_holdings.kindomUniqueId = fallout_kingdoms.uniqueId WHERE fallout_land_holdings.world = ? AND fallout_land_holdings.posX = ? AND fallout_land_holdings.posZ = ?";
+    private static final String QUERY_ADD_MEMBER_TO_KINGDOM = "INSERT INTO fallout_kingdom_members (`uniqueId`, `kingdomUniqueId`, `rankId`) VALUES (?, ?, ?)";
+    private static final String QUERY_REMOVE_MEMBER_FROM_KINGDOM = "DELETE FROM fallout_kingdom_members WHERE `uniqueId` = ? AND `kingdomUniqueId` = ?";
+    private static final String QUERY_GET_KINGDOM_MEMBER = "SELECT rankId FROM fallout_kingdom_members WHERE `uniqueId` = ? AND `kingdomUniqueId` = ?";
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final DataSource dataSource;
@@ -86,7 +89,7 @@ public class KingdomControllerImpl implements KingdomController {
     }
 
     @Override
-    public void createKingdom(UUID uniqueId, String name, String description, Consumer<Boolean> resultConsumer) {
+    public void createKingdom(UUID uniqueId, UUID ownerUniqueId, String name, String description, Consumer<Boolean> resultConsumer) {
         executorService.submit(() -> {
             try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_CREATE_KINGDOM)) {
                 preparedStatement.setString(1, uniqueId.toString());
@@ -95,6 +98,12 @@ public class KingdomControllerImpl implements KingdomController {
 
                 int result = preparedStatement.executeUpdate();
                 resultConsumer.accept(result > 0);
+
+                if (result < 0) {
+                    return;
+                }
+
+                addMemberToKingdom(uniqueId, ownerUniqueId, 0);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -122,18 +131,48 @@ public class KingdomControllerImpl implements KingdomController {
     }
 
     @Override
-    public void addMemberToKingdom(UUID kingdomUniqueId, UUID playerUniqueId) {
+    public void addMemberToKingdom(UUID kingdomUniqueId, UUID playerUniqueId, int rankId) {
+        executorService.submit(() -> {
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_ADD_MEMBER_TO_KINGDOM)) {
+                preparedStatement.setString(1, playerUniqueId.toString());
+                preparedStatement.setString(2, kingdomUniqueId.toString());
+                preparedStatement.setInt(3, rankId);
 
+                preparedStatement.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     @Override
     public void removeMemberFromKingdom(UUID kingdomUniqueId, UUID playerUniqueId) {
+        executorService.submit(() -> {
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_REMOVE_MEMBER_FROM_KINGDOM)) {
+                preparedStatement.setString(1, playerUniqueId.toString());
+                preparedStatement.setString(2, kingdomUniqueId.toString());
 
+                preparedStatement.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     @Override
-    public void isKingdomMember(UUID kingdomUniqueId, UUID playerUniqueId) {
+    public void isKingdomMember(UUID kingdomUniqueId, UUID playerUniqueId, Consumer<Boolean> result) {
+        executorService.submit(() -> {
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_GET_KINGDOM_MEMBER)) {
+                preparedStatement.setString(1, playerUniqueId.toString());
+                preparedStatement.setString(2, kingdomUniqueId.toString());
 
+                ResultSet resultSet = preparedStatement.executeQuery();
+                result.accept(resultSet.next());
+                resultSet.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     @Override

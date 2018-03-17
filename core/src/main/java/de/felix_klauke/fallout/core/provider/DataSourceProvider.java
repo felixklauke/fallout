@@ -61,6 +61,16 @@ public class DataSourceProvider implements Provider<DataSource> {
                     "  engine = InnoDB");
             preparedStatement.executeUpdate();
             preparedStatement.close();
+
+            preparedStatement = connection.prepareStatement("CREATE TABLE IF NOT EXISTS fallout_kingdom_members\n" +
+                    "(\n" +
+                    "    id int PRIMARY KEY AUTO_INCREMENT,\n" +
+                    "    uniqueId VARCHAR(36) NOT NULL,\n" +
+                    "    kingdomUniqueId VARCHAR(36),\n" +
+                    "    rankId int\n" +
+                    ");");
+            preparedStatement.executeUpdate();
+            preparedStatement.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
