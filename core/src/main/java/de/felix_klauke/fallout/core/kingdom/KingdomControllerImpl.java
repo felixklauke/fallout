@@ -105,7 +105,9 @@ public class KingdomControllerImpl implements KingdomController {
                     return;
                 }
 
-                addMemberToKingdom(uniqueId, ownerUniqueId, 0);
+                addMemberToKingdom(uniqueId, ownerUniqueId, 0, aBoolean -> {
+  
+                });
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -149,14 +151,15 @@ public class KingdomControllerImpl implements KingdomController {
     }
 
     @Override
-    public void addMemberToKingdom(UUID kingdomUniqueId, UUID playerUniqueId, int rankId) {
+    public void addMemberToKingdom(UUID kingdomUniqueId, UUID playerUniqueId, int rankId, Consumer<Boolean> consumer) {
         executorService.submit(() -> {
             try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_ADD_MEMBER_TO_KINGDOM)) {
                 preparedStatement.setString(1, playerUniqueId.toString());
                 preparedStatement.setString(2, kingdomUniqueId.toString());
                 preparedStatement.setInt(3, rankId);
 
-                preparedStatement.executeUpdate();
+                int rows = preparedStatement.executeUpdate();
+                consumer.accept(rows > 0);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -188,13 +191,14 @@ public class KingdomControllerImpl implements KingdomController {
     }
 
     @Override
-    public void removeMemberFromKingdom(UUID kingdomUniqueId, UUID playerUniqueId) {
+    public void removeMemberFromKingdom(UUID kingdomUniqueId, UUID playerUniqueId, Consumer<Boolean> consumer) {
         executorService.submit(() -> {
             try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_REMOVE_MEMBER_FROM_KINGDOM)) {
                 preparedStatement.setString(1, playerUniqueId.toString());
                 preparedStatement.setString(2, kingdomUniqueId.toString());
 
-                preparedStatement.executeUpdate();
+                int rows = preparedStatement.executeUpdate();
+                consumer.accept(rows > 0);
             } catch (SQLException e) {
                 e.printStackTrace();
             }

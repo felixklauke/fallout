@@ -19,11 +19,11 @@ public interface KingdomController {
 
     void getKingdom(UUID playerUniqueId, Consumer<Kingdom> kingdomConsumer);
 
-    void addMemberToKingdom(UUID kingdomUniqueId, UUID playerUniqueId, int rankId);
+    void addMemberToKingdom(UUID kingdomUniqueId, UUID playerUniqueId, int rankId, Consumer<Boolean> consumer);
 
     void getKingdomMembers(UUID kingdomUniqueId, Consumer<Set<KingdomMember>> consumer);
 
-    void removeMemberFromKingdom(UUID kingdomUniqueId, UUID playerUniqueId);
+    void removeMemberFromKingdom(UUID kingdomUniqueId, UUID playerUniqueId, Consumer<Boolean> consumer);
 
     void isKingdomMember(UUID kingdomUniqueId, UUID playerUniqueId, Consumer<Boolean> result);
 
