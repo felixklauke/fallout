@@ -28,6 +28,22 @@ public class CommandKingdom implements CommandExecutor {
             return false;
         }
 
+        Player player = (Player) commandSender;
+
+        switch (args.length) {
+            case 0: {
+                falloutApplication.get().handleKingdomInfoPerformed(player);
+                break;
+            }
+            case 2: {
+                if (args[0].equalsIgnoreCase("create")) {
+                    falloutApplication.get().handleKingdomCreatePerformed(player, args[1]);
+                }
+
+                break;
+            }
+        }
+
         return true;
     }
 }

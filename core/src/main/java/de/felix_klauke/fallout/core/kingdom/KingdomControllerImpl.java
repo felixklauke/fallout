@@ -22,7 +22,8 @@ public class KingdomControllerImpl implements KingdomController {
     private static final String QUERY_GET_KINGDOM_BY_NAME = "SELECT `uniqueId`, `description` FROM fallout_kingdoms WHERE fallout_kingdoms.`name` = ?";
     private static final String QUERY_CREATE_KINGDOM = "INSERT INTO fallout_kingdoms (`uniqueId`, `name`, `description`) VALUES (?, ?, ?)";
     private static final String QUERY_DELETE_KINGDOM_BY_UUID = "DELETE FROM fallout_kingdoms WHERE `uniqueId` = ?";
-    private static final String QUERY_GET_LAND_HOLDINGS_BY_KINGDOM_UUID = "SELECT `posX`, `posZ` FROM fallout_land_holdings WHERE `kindomUniqueId` = ?";
+    private static final String QUERY_GET_LAND_HOLDINGS_BY_KINGDOM_UUID = "SELECT `world`, `posX`, `posZ` FROM fallout_land_holdings WHERE `kindomUniqueId` = ?";
+    private static final String QUERY_GET_KINGDOM_BY_LOCATION = "SELECT fallout_kingdoms.`uniqueId`, fallout_kingdoms.`description`, fallout_kingdoms.`name` FROM fallout_land_holdings INNER JOIN fallout_kingdoms ON fallout_land_holdings.kindomUniqueId = fallout_kingdoms.uniqueId WHERE fallout_land_holdings.world = ? AND fallout_land_holdings.posX = ? AND fallout_land_holdings.posZ = ?";
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final DataSource dataSource;
@@ -70,7 +71,7 @@ public class KingdomControllerImpl implements KingdomController {
                 ResultSet resultSet = preparedStatement.executeQuery();
 
                 while (resultSet.next()) {
-                    KingdomLandHolding holding = new SimpleKingdomLandHolding(resultSet.getString("worldName"),
+                    KingdomLandHolding holding = new SimpleKingdomLandHolding(resultSet.getString("world"),
                             resultSet.getInt("posX"), resultSet.getInt("posZ"));
                     holdings.add(holding);
                 }
@@ -92,8 +93,8 @@ public class KingdomControllerImpl implements KingdomController {
                 preparedStatement.setString(2, name);
                 preparedStatement.setString(3, description);
 
-                boolean result = preparedStatement.execute();
-                resultConsumer.accept(result);
+                int result = preparedStatement.executeUpdate();
+                resultConsumer.accept(result > 0);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -133,5 +134,31 @@ public class KingdomControllerImpl implements KingdomController {
     @Override
     public void isKingdomMember(UUID kingdomUniqueId, UUID playerUniqueId) {
 
+    }
+
+    @Override
+    public void getKingdom(String worldName, int x, int z, Consumer<Kingdom> kingdomConsumer) {
+        executorService.submit(() -> {
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_GET_KINGDOM_BY_LOCATION)) {
+                preparedStatement.setString(1, worldName);
+                preparedStatement.setInt(2, x);
+                preparedStatement.setInt(3, z);
+
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                if (!resultSet.next()) {
+                    kingdomConsumer.accept(null);
+                    return;
+                }
+
+                Kingdom kingdom = new SimpleKingdom(UUID.fromString(resultSet.getString("uniqueId")), resultSet.getString("name"), resultSet.getString("description"));
+
+                resultSet.close();
+
+                kingdomConsumer.accept(kingdom);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 }

@@ -24,4 +24,6 @@ public interface KingdomController {
     void removeMemberFromKingdom(UUID kingdomUniqueId, UUID playerUniqueId);
 
     void isKingdomMember(UUID kingdomUniqueId, UUID playerUniqueId);
+
+    void getKingdom(String worldName, int x, int z, Consumer<Kingdom> kingdomConsumer);
 }
