@@ -2,10 +2,13 @@ package de.felix_klauke.fallout.spigot;
 
 import de.felix_klauke.fallout.core.kingdom.Kingdom;
 import de.felix_klauke.fallout.core.kingdom.KingdomController;
+import de.felix_klauke.fallout.core.kingdom.KingdomMember;
 import de.felix_klauke.fallout.spigot.command.CommandKingdom;
 import de.felix_klauke.fallout.spigot.task.TaxCollectingTask;
+import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -234,11 +237,24 @@ public class FalloutSpigotApplicationImpl implements FalloutSpigotApplication {
                 currentCosts[0] += kingdomTaxesHoldingMultiplier * holdingCount;
 
                 if (currentBalance >= currentCosts[0]) {
-                    // TODO: Process costs
+                    kingdomController.manipulateKingdomBalance(kingdom.getUniqueId(), -currentCosts[0], success -> {
+                        // TODO: Log
+                    });
                     return;
                 }
 
-                // TODO: Taxes could not be paid
+                kingdomController.getKingdomMembers(kingdom.getUniqueId(), kingdomMembers -> {
+                    for (KingdomMember kingdomMember : kingdomMembers) {
+                        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(kingdomMember.getUniqueId());
+                        if (offlinePlayer.isOnline()) {
+                            offlinePlayer.getPlayer().sendMessage("Dein Königreich wird wegen Bankrotts aufgelöst.");
+                        }
+                    }
+
+                    kingdomController.disbandKingdom(kingdom.getUniqueId(), success -> {
+                        // TODO: Log
+                    });
+                });
             });
         });
     }

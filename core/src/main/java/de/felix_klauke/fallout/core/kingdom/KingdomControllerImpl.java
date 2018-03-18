@@ -36,6 +36,8 @@ public class KingdomControllerImpl implements KingdomController {
     private static final String QUERY_UPDATE_KINGDOM_BALANCE = "UPDATE fallout_kingdoms SET `balance` = `balance` + ? WHERE `uniqueId` = ?";
     private static final String QUERY_GET_KINGDOM_MEMBER_COUNT = "SELECT COUNT(`uniqueId`) AS memberCount FROM fallout_kingdom_members WHERE kingdomUniqueId = ?";
     private static final String QUERY_GET_KINGDOM_HOLDING_COUNT = "SELECT COUNT(kingdomUniqueId) AS holdingCount FROM fallout_land_holdings WHERE kingdomUniqueId = ?";
+    private static final String QUERY_DELETE_MEMBERS_BY_KINGDOM_UUID = "DELETE FROM fallout_kingdom_members WHERE `kingdomUniqueId` = ?";
+    private static final String QUERY_DELETE_HOLDINGS_BY_KINGDOM_UUID = "DELETE FROM fallout_land_holdings WHERE `kingdomUniqueId` = ?";
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final DataSource dataSource;
@@ -387,6 +389,56 @@ public class KingdomControllerImpl implements KingdomController {
                 int memberCount = resultSet.getInt("holdingCount");
                 resultSet.close();
                 consumer.accept(memberCount);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    @Override
+    public void disbandKingdom(UUID uniqueId, Consumer<Boolean> consumer) {
+        executorService.submit(() -> {
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_DELETE_KINGDOM_BY_UUID)) {
+                preparedStatement.setString(1, uniqueId.toString());
+
+                int rows = preparedStatement.executeUpdate();
+                consumer.accept(rows > 0);
+
+                removeMembersFromKingdom(uniqueId, success -> {
+
+                });
+
+                removeKingdomHoldings(uniqueId, success -> {
+
+                });
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    @Override
+    public void removeKingdomHoldings(UUID uniqueId, Consumer<Boolean> consumer) {
+        executorService.submit(() -> {
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_DELETE_HOLDINGS_BY_KINGDOM_UUID)) {
+                preparedStatement.setString(1, uniqueId.toString());
+
+                int rows = preparedStatement.executeUpdate();
+                consumer.accept(rows > 0);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    @Override
+    public void removeMembersFromKingdom(UUID uniqueId, Consumer<Boolean> consumer) {
+        executorService.submit(() -> {
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_DELETE_MEMBERS_BY_KINGDOM_UUID)) {
+                preparedStatement.setString(1, uniqueId.toString());
+
+                int rows = preparedStatement.executeUpdate();
+                consumer.accept(rows > 0);
             } catch (SQLException e) {
                 e.printStackTrace();
             }

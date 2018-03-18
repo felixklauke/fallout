@@ -42,4 +42,10 @@ public interface KingdomController {
     void getKingdomMemberCount(UUID kingdomUniqueId, Consumer<Integer> consumer);
 
     void getKingdomHoldingCount(UUID kingdomUniqueId, Consumer<Integer> consumer);
+
+    void disbandKingdom(UUID uniqueId, Consumer<Boolean> consumer);
+
+    void removeKingdomHoldings(UUID uniqueId, Consumer<Boolean> consumer);
+
+    void removeMembersFromKingdom(UUID uniqueId, Consumer<Boolean> consumer);
 }
