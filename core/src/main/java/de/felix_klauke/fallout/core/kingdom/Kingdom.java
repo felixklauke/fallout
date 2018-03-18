@@ -12,4 +12,6 @@ public interface Kingdom {
     String getName();
 
     String getDescription();
+
+    double getBalance();
 }

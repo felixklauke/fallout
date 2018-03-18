@@ -20,7 +20,7 @@ KingdomController kingdomController = falloutApplication.getKingdomController();
 _Creating a kingdom:_
 
 Note: When you create a kingdom you have to provide the player who creates the kingdom and the location of the
-initial holding the kingdom will use as capital. 
+initial holding the kingdom will use as capital.
 
 ```java
 UUID kingdomUniqueId = UUID.randomUUID();
