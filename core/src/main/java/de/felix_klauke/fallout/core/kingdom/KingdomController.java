@@ -34,4 +34,6 @@ public interface KingdomController {
     void updateMemberRank(UUID playerUniqueId, int rankId, Consumer<Boolean> consumer);
 
     void getKingdom(String worldName, int x, int z, Consumer<Kingdom> kingdomConsumer);
+
+    void manipulateKingdomBalance(UUID uniqueId, double delta, Consumer<Boolean> consumer);
 }

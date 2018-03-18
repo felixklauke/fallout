@@ -33,6 +33,18 @@ public class CommandKingdom implements CommandExecutor {
         switch (args.length) {
             case 0: {
                 falloutApplication.get().handleKingdomInfoPerformed(player);
+
+                break;
+            }
+            case 1: {
+                if (args[0].equalsIgnoreCase("here")) {
+                    falloutApplication.get().handleKingdomHerePerformed(player);
+                } else if (args[0].equalsIgnoreCase("leave")) {
+                    falloutApplication.get().handleKingdomLeavePerformed(player);
+                } else if (args[0].equalsIgnoreCase("claim")) {
+                    falloutApplication.get().handleKingdomClaimPerformed(player);
+                }
+
                 break;
             }
             case 2: {

@@ -11,7 +11,13 @@ public interface FalloutSpigotApplication {
 
     void destroy();
 
-    void handleKingdomInfoPerformed(Player player);
+    void handleKingdomHerePerformed(Player player);
 
     void handleKingdomCreatePerformed(Player player, String arg);
+
+    void handleKingdomInfoPerformed(Player player);
+
+    void handleKingdomLeavePerformed(Player player);
+
+    void handleKingdomClaimPerformed(Player player);
 }

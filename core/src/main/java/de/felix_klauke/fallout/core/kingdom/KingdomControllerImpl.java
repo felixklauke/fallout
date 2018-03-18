@@ -32,6 +32,7 @@ public class KingdomControllerImpl implements KingdomController {
     private static final String QUERY_UPDATE_MEMBER_RANK = "UPDATE fallout_kingdom_members SET rankId = ? WHERE uniqueId = ?";
     private static final String QUERY_REMOVE_HOLDING_FROM_KINGDOM = "DELETE FROM fallout_land_holdings WHERE `world` = ? AND `posX` = ? AND `posZ` = ? AND `kindomUniqueId` = ?";
     private static final String QUERY_ADD_HOLDING_TO_KINGDOM = "INSERT INTO fallout_land_holdings (`world`, `posX`, `posZ`, `kindomUniqueId`) VALUES (?, ?, ?, ?)";
+    private static final String QUERY_UPDATE_KINGDOM_BALANCE = "UPDATE fallout_kingdoms SET `balance` = `balance` + ? WHERE `uniqueId` = ?";
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final DataSource dataSource;
@@ -302,6 +303,21 @@ public class KingdomControllerImpl implements KingdomController {
                 resultSet.close();
 
                 kingdomConsumer.accept(kingdom);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    @Override
+    public void manipulateKingdomBalance(UUID uniqueId, double delta, Consumer<Boolean> consumer) {
+        executorService.submit(() -> {
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_UPDATE_KINGDOM_BALANCE)) {
+                preparedStatement.setDouble(1, delta);
+                preparedStatement.setString(2, uniqueId.toString());
+
+                int rows = preparedStatement.executeUpdate();
+                consumer.accept(rows > 0);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
