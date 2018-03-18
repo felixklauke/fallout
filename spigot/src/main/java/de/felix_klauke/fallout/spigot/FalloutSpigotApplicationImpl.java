@@ -59,14 +59,28 @@ public class FalloutSpigotApplicationImpl implements FalloutSpigotApplication {
 
     @Override
     public void handleKingdomCreatePerformed(Player player, String kingdomName) {
-        Location location = player.getLocation();
-        kingdomController.createKingdom(UUID.randomUUID(), player.getUniqueId(), kingdomName, 0, "Just another random kingdom.", location.getWorld().getName(), location.getChunk().getX(), location.getChunk().getZ(), success -> {
-            if (success) {
-                player.sendMessage("Ein Fehler ist aufgetreten.");
+        kingdomController.getKingdom(kingdomName, kingdom -> {
+            if (kingdom != null) {
+                player.sendMessage("En Königreich mit diesem Namen existiert bereits.");
                 return;
             }
 
-            player.sendMessage("Königreich erstellt.");
+            Chunk chunk = player.getLocation().getChunk();
+            kingdomController.getKingdom(chunk.getWorld().getName(), chunk.getX(), chunk.getZ(), existingKingdom -> {
+                if (existingKingdom != null) {
+                    player.sendMessage("Hier ist bereits ein Königreich.");
+                    return;
+                }
+
+                kingdomController.createKingdom(UUID.randomUUID(), player.getUniqueId(), kingdomName, 0, "Just another random kingdom.", chunk.getWorld().getName(), chunk.getX(), chunk.getZ(), success -> {
+                    if (!success) {
+                        player.sendMessage("Ein Fehler ist aufgetreten.");
+                        return;
+                    }
+
+                    player.sendMessage("Königreich erstellt.");
+                });
+            });
         });
     }
 
