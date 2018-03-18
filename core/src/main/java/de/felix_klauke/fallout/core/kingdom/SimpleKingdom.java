@@ -36,6 +36,6 @@ public class SimpleKingdom implements Kingdom {
 
     @Override
     public double getBalance() {
-        return getBalance();
+        return balance;
     }
 }
