@@ -145,21 +145,31 @@ public class FalloutSpigotApplicationImpl implements FalloutSpigotApplication {
                     return;
                 }
 
-                kingdomController.addKingdomHolding(kingdom.getUniqueId(), chunk.getWorld().getName(), chunk.getX(), chunk.getZ(), success -> {
-                    if (!success) {
-                        player.sendMessage("Es ist ein Fehler aufgetreten.");
+                kingdomController.getKingdomHoldings(kingdom.getUniqueId(), kingdomLandHoldings -> {
+                    boolean isInRange = kingdomLandHoldings.stream()
+                            .anyMatch(kingdomLandHolding -> Math.sqrt(Math.pow(kingdomLandHolding.getX() - chunk.getX(), 2) + Math.pow(kingdomLandHolding.getZ() - chunk.getZ(), 2)) <= 1);
+
+                    if (!isInRange) {
+                        player.sendMessage("Du kannst nur direkt neben deinem bestehenden Königreich claimen.");
                         return;
                     }
 
-                    player.sendMessage("Das Land wurde deinem Königreich hinzugefügt.");
-
-                    kingdomController.manipulateKingdomBalance(kingdom.getUniqueId(), -kingdomCostsClaim, balanceManipulationSuccessful -> {
-                        if (!balanceManipulationSuccessful) {
-                            player.sendMessage("Beim Bezahlen der Kosten für das Land ist ein Fehler aufgetreten.");
+                    kingdomController.addKingdomHolding(kingdom.getUniqueId(), chunk.getWorld().getName(), chunk.getX(), chunk.getZ(), success -> {
+                        if (!success) {
+                            player.sendMessage("Es ist ein Fehler aufgetreten.");
                             return;
                         }
 
-                        player.sendMessage("Deinem Königreich wurde entsprechend Geld aus der Staatskasse entfernt.");
+                        player.sendMessage("Das Land wurde deinem Königreich hinzugefügt.");
+
+                        kingdomController.manipulateKingdomBalance(kingdom.getUniqueId(), -kingdomCostsClaim, balanceManipulationSuccessful -> {
+                            if (!balanceManipulationSuccessful) {
+                                player.sendMessage("Beim Bezahlen der Kosten für das Land ist ein Fehler aufgetreten.");
+                                return;
+                            }
+
+                            player.sendMessage("Deinem Königreich wurde entsprechend Geld aus der Staatskasse entfernt.");
+                        });
                     });
                 });
             });
