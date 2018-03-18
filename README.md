@@ -28,7 +28,7 @@ UUID playerUniqueId = UUID.randomUUID();
 String kingdomName = "CoolKingdom";
 String kingdomDescription = "Another cool kingdom";
 
-kingdomController.createKingdom(kingdomUniqueId, playerUniqueId, kingdomName, kingdomDescription, worldName, chunkX, chunkZ, new Consumer<Boolean>() {
+kingdomController.createKingdom(kingdomUniqueId, playerUniqueId, kingdomName, 500, kingdomDescription, worldName, chunkX, chunkZ, new Consumer<Boolean>() {
     @Override
     public void accept(Boolean result) {
         // callback
