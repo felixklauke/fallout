@@ -32,5 +32,13 @@ public class FalloutSpigotModule extends AbstractModule {
         bind(Plugin.class).annotatedWith(Names.named("falloutPlugin")).toInstance(falloutSpigotPlugin);
 
         bind(FalloutSpigotApplication.class).to(FalloutSpigotApplicationImpl.class).asEagerSingleton();
+
+        bindConfig(falloutSpigotPlugin.getConfig());
+    }
+
+    private void bindConfig(FileConfiguration config) {
+        bindConstant().annotatedWith(Names.named("kingdomDefaultBalance")).to(config.getDouble("kingdom.default-balance", 0));
+        bindConstant().annotatedWith(Names.named("kingdomCostsClaim")).to(config.getDouble("kingdom.costs.claim", Double.MAX_VALUE));
+        bindConstant().annotatedWith(Names.named("kingdomDefaultDescription")).to(config.getString("kingdom.default-description", "Kingdom1337"));
     }
 }

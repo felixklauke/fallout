@@ -2,3 +2,9 @@ database:
   url: jdbc:mysql://localhost:8889/fallout
   user: fallout
   password:
+
+kingdom:
+  default-balance: 0
+  default-description: Just another random kingdom
+  costs:
+    claim: 500

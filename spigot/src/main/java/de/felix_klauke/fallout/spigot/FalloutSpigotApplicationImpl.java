@@ -23,12 +23,22 @@ public class FalloutSpigotApplicationImpl implements FalloutSpigotApplication {
     private final KingdomController kingdomController;
     private final CommandKingdom commandKingdom;
 
+    private final double kingdomDefaultBalance;
+    private final double kingdomCostsClaim;
+    private final String kingdomDefaultDescription;
+
     @Inject
     public FalloutSpigotApplicationImpl(@Named("falloutPlugin") Plugin plugin, KingdomController kingdomController,
-                                        CommandKingdom commandKingdom) {
+                                        CommandKingdom commandKingdom,
+                                        @Named("kingdomDefaultBalance") double kingdomDefaultBalance,
+                                        @Named("kingdomCostsClaim") double kingdomCostsClaim,
+                                        @Named("kingdomDefaultDescription") String kingdomDefaultDescription) {
         this.plugin = (JavaPlugin) plugin;
         this.kingdomController = kingdomController;
         this.commandKingdom = commandKingdom;
+        this.kingdomDefaultBalance = kingdomDefaultBalance;
+        this.kingdomCostsClaim = kingdomCostsClaim;
+        this.kingdomDefaultDescription = kingdomDefaultDescription;
     }
 
     @Override
@@ -72,7 +82,7 @@ public class FalloutSpigotApplicationImpl implements FalloutSpigotApplication {
                     return;
                 }
 
-                kingdomController.createKingdom(UUID.randomUUID(), player.getUniqueId(), kingdomName, 0, "Just another random kingdom.", chunk.getWorld().getName(), chunk.getX(), chunk.getZ(), success -> {
+                kingdomController.createKingdom(UUID.randomUUID(), player.getUniqueId(), kingdomName, kingdomDefaultBalance, kingdomDefaultDescription, chunk.getWorld().getName(), chunk.getX(), chunk.getZ(), success -> {
                     if (!success) {
                         player.sendMessage("Ein Fehler ist aufgetreten.");
                         return;
@@ -130,7 +140,7 @@ public class FalloutSpigotApplicationImpl implements FalloutSpigotApplication {
                     return;
                 }
 
-                if (kingdom.getBalance() < 500) {
+                if (kingdom.getBalance() < kingdomCostsClaim) {
                     player.sendMessage("Das Königreich hat nicht genügend Geld in der Kasse.");
                     return;
                 }
@@ -143,7 +153,7 @@ public class FalloutSpigotApplicationImpl implements FalloutSpigotApplication {
 
                     player.sendMessage("Das Land wurde deinem Königreich hinzugefügt.");
 
-                    kingdomController.manipulateKingdomBalance(kingdom.getUniqueId(), -500, balanceManipulationSuccessful -> {
+                    kingdomController.manipulateKingdomBalance(kingdom.getUniqueId(), -kingdomCostsClaim, balanceManipulationSuccessful -> {
                         if (!balanceManipulationSuccessful) {
                             player.sendMessage("Beim Bezahlen der Kosten für das Land ist ein Fehler aufgetreten.");
                             return;
