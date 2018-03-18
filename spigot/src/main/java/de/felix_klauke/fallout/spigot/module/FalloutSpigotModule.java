@@ -40,5 +40,9 @@ public class FalloutSpigotModule extends AbstractModule {
         bindConstant().annotatedWith(Names.named("kingdomDefaultBalance")).to(config.getDouble("kingdom.default-balance", 0));
         bindConstant().annotatedWith(Names.named("kingdomCostsClaim")).to(config.getDouble("kingdom.costs.claim", Double.MAX_VALUE));
         bindConstant().annotatedWith(Names.named("kingdomDefaultDescription")).to(config.getString("kingdom.default-description", "Kingdom1337"));
+        bindConstant().annotatedWith(Names.named("kingdomTaxesEnabled")).to(config.getBoolean("kingdom.taxes.enabled", false));
+        bindConstant().annotatedWith(Names.named("kingdomTaxesMemberMultiplier")).to(config.getDouble("kingdom.taxes.member-multiplier", 0));
+        bindConstant().annotatedWith(Names.named("kingdomTaxesHoldingMultiplier")).to(config.getDouble("kingdom.taxes.holding-multiplier", 0));
+        bindConstant().annotatedWith(Names.named("kingdomTaxesBaseCosts")).to(config.getDouble("kingdom.taxes.base-taxes", 0));
     }
 }

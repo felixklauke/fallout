@@ -19,20 +19,23 @@ import java.util.function.Consumer;
  */
 public class KingdomControllerImpl implements KingdomController {
 
+    private static final String QUERY_GET_KINGDOMS = "SELECT `uniqueId`, `name`, `balance`, `description` FROM fallout_kingdoms";
     private static final String QUERY_GET_KINGDOM_BY_NAME = "SELECT `uniqueId`, `balance`, `description` FROM fallout_kingdoms WHERE fallout_kingdoms.`name` = ?";
     private static final String QUERY_CREATE_KINGDOM = "INSERT INTO fallout_kingdoms (`uniqueId`, `name`, `balance`, `description`) VALUES (?, ?, ?, ?)";
     private static final String QUERY_DELETE_KINGDOM_BY_UUID = "DELETE FROM fallout_kingdoms WHERE `uniqueId` = ?";
-    private static final String QUERY_GET_LAND_HOLDINGS_BY_KINGDOM_UUID = "SELECT `world`, `posX`, `posZ` FROM fallout_land_holdings WHERE `kindomUniqueId` = ?";
-    private static final String QUERY_GET_KINGDOM_BY_LOCATION = "SELECT fallout_kingdoms.`uniqueId`, fallout_kingdoms.`balance`,fallout_kingdoms.`description`, fallout_kingdoms.`name` FROM fallout_land_holdings INNER JOIN fallout_kingdoms ON fallout_land_holdings.kindomUniqueId = fallout_kingdoms.uniqueId WHERE fallout_land_holdings.world = ? AND fallout_land_holdings.posX = ? AND fallout_land_holdings.posZ = ?";
+    private static final String QUERY_GET_LAND_HOLDINGS_BY_KINGDOM_UUID = "SELECT `world`, `posX`, `posZ` FROM fallout_land_holdings WHERE kingdomUniqueId = ?";
+    private static final String QUERY_GET_KINGDOM_BY_LOCATION = "SELECT fallout_kingdoms.`uniqueId`, fallout_kingdoms.`balance`,fallout_kingdoms.`description`, fallout_kingdoms.`name` FROM fallout_land_holdings INNER JOIN fallout_kingdoms ON fallout_land_holdings.kingdomUniqueId = fallout_kingdoms.uniqueId WHERE fallout_land_holdings.world = ? AND fallout_land_holdings.posX = ? AND fallout_land_holdings.posZ = ?";
     private static final String QUERY_ADD_MEMBER_TO_KINGDOM = "INSERT INTO fallout_kingdom_members (`uniqueId`, `kingdomUniqueId`, `rankId`) VALUES (?, ?, ?)";
     private static final String QUERY_REMOVE_MEMBER_FROM_KINGDOM = "DELETE FROM fallout_kingdom_members WHERE `uniqueId` = ? AND `kingdomUniqueId` = ?";
     private static final String QUERY_GET_KINGDOM_MEMBER = "SELECT `rankId` FROM fallout_kingdom_members WHERE `uniqueId` = ? AND `kingdomUniqueId` = ?";
     private static final String QUERY_GET_KINGDOM_MEMBERS = "SELECT `uniqueId`, `rankId` FROM fallout_kingdom_members WHERE `kingdomUniqueId` = ?";
     private static final String QUERY_GET_KINGDOM_BY_MEMBER_UUID = "SELECT fallout_kingdoms.`uniqueId`, fallout_kingdoms.`name`, fallout_kingdoms.`balance`, fallout_kingdoms.`description` FROM fallout_kingdom_members INNER JOIN fallout_kingdoms ON fallout_kingdoms.`uniqueId` = fallout_kingdom_members.`kingdomUniqueId` WHERE fallout_kingdom_members.`uniqueId` = ?";
     private static final String QUERY_UPDATE_MEMBER_RANK = "UPDATE fallout_kingdom_members SET rankId = ? WHERE uniqueId = ?";
-    private static final String QUERY_REMOVE_HOLDING_FROM_KINGDOM = "DELETE FROM fallout_land_holdings WHERE `world` = ? AND `posX` = ? AND `posZ` = ? AND `kindomUniqueId` = ?";
-    private static final String QUERY_ADD_HOLDING_TO_KINGDOM = "INSERT INTO fallout_land_holdings (`world`, `posX`, `posZ`, `kindomUniqueId`) VALUES (?, ?, ?, ?)";
+    private static final String QUERY_REMOVE_HOLDING_FROM_KINGDOM = "DELETE FROM fallout_land_holdings WHERE `world` = ? AND `posX` = ? AND `posZ` = ? AND kingdomUniqueId = ?";
+    private static final String QUERY_ADD_HOLDING_TO_KINGDOM = "INSERT INTO fallout_land_holdings (`world`, `posX`, `posZ`, kingdomUniqueId) VALUES (?, ?, ?, ?)";
     private static final String QUERY_UPDATE_KINGDOM_BALANCE = "UPDATE fallout_kingdoms SET `balance` = `balance` + ? WHERE `uniqueId` = ?";
+    private static final String QUERY_GET_KINGDOM_MEMBER_COUNT = "SELECT COUNT(`uniqueId`) AS memberCount FROM fallout_kingdom_members WHERE kingdomUniqueId = ?";
+    private static final String QUERY_GET_KINGDOM_HOLDING_COUNT = "SELECT COUNT(kingdomUniqueId) AS holdingCount FROM fallout_land_holdings WHERE kingdomUniqueId = ?";
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final DataSource dataSource;
@@ -318,6 +321,72 @@ public class KingdomControllerImpl implements KingdomController {
 
                 int rows = preparedStatement.executeUpdate();
                 consumer.accept(rows > 0);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    @Override
+    public void getKingdoms(Consumer<Set<Kingdom>> consumer) {
+        executorService.submit(() -> {
+            Set<Kingdom> kingdoms = Sets.newHashSet();
+
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_GET_KINGDOMS)) {
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                while (resultSet.next()) {
+                    Kingdom kingdom = new SimpleKingdom(UUID.fromString(resultSet.getString("uniqueId")), resultSet.getString("name"), resultSet.getDouble("balance"), resultSet.getString("description"));
+                    kingdoms.add(kingdom);
+                }
+
+                resultSet.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            consumer.accept(kingdoms);
+        });
+    }
+
+    @Override
+    public void getKingdomMemberCount(UUID kingdomUniqueId, Consumer<Integer> consumer) {
+        executorService.submit(() -> {
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_GET_KINGDOM_MEMBER_COUNT)) {
+                preparedStatement.setString(1, kingdomUniqueId.toString());
+
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                if (!resultSet.next()) {
+                    consumer.accept(0);
+                    return;
+                }
+
+                int memberCount = resultSet.getInt("memberCount");
+                resultSet.close();
+                consumer.accept(memberCount);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    @Override
+    public void getKingdomHoldingCount(UUID kingdomUniqueId, Consumer<Integer> consumer) {
+        executorService.submit(() -> {
+            try (Connection connection = dataSource.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(QUERY_GET_KINGDOM_HOLDING_COUNT)) {
+                preparedStatement.setString(1, kingdomUniqueId.toString());
+
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                if (!resultSet.next()) {
+                    consumer.accept(0);
+                    return;
+                }
+
+                int memberCount = resultSet.getInt("holdingCount");
+                resultSet.close();
+                consumer.accept(memberCount);
             } catch (SQLException e) {
                 e.printStackTrace();
             }

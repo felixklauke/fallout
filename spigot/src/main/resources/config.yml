@@ -1,10 +1,21 @@
+########################################
+## Fallout Kingdom configuration file ##
+########################################
+
+# Database configuration for the database configuration
 database:
   url: jdbc:mysql://localhost:8889/fallout
   user: fallout
   password:
 
+# Basic values used to control the kingdoms
 kingdom:
   default-balance: 0
   default-description: Just another random kingdom
   costs:
     claim: 500
+  taxes:
+    enabled: true
+    base-taxes: 1000
+    member-multiplier: 100
+    holding-multiplier: 100

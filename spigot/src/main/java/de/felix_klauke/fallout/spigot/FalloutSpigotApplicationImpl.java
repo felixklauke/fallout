@@ -3,6 +3,7 @@ package de.felix_klauke.fallout.spigot;
 import de.felix_klauke.fallout.core.kingdom.Kingdom;
 import de.felix_klauke.fallout.core.kingdom.KingdomController;
 import de.felix_klauke.fallout.spigot.command.CommandKingdom;
+import de.felix_klauke.fallout.spigot.task.TaxCollectingTask;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -11,7 +12,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -19,36 +26,70 @@ import java.util.function.Consumer;
  */
 public class FalloutSpigotApplicationImpl implements FalloutSpigotApplication {
 
+    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+
     private final JavaPlugin plugin;
     private final KingdomController kingdomController;
     private final CommandKingdom commandKingdom;
 
+    private final TaxCollectingTask taxCollectingTask;
+    private final boolean kingdomTaxesEnabled;
+
     private final double kingdomDefaultBalance;
     private final double kingdomCostsClaim;
     private final String kingdomDefaultDescription;
+    private final double kingdomTaxesMemberMultiplier;
+    private final double kingdomTaxesHoldingMultiplier;
+    private final double kingdomTaxesBaseCosts;
+    private ScheduledFuture<?> taxCollectingTaskFuture;
 
     @Inject
     public FalloutSpigotApplicationImpl(@Named("falloutPlugin") Plugin plugin, KingdomController kingdomController,
                                         CommandKingdom commandKingdom,
+                                        TaxCollectingTask taxCollectingTask,
                                         @Named("kingdomDefaultBalance") double kingdomDefaultBalance,
                                         @Named("kingdomCostsClaim") double kingdomCostsClaim,
-                                        @Named("kingdomDefaultDescription") String kingdomDefaultDescription) {
+                                        @Named("kingdomDefaultDescription") String kingdomDefaultDescription,
+                                        @Named("kingdomTaxesEnabled") boolean kingdomTaxesEnabled,
+                                        @Named("kingdomTaxesMemberMultiplier") double kingdomTaxesMemberMultiplier,
+                                        @Named("kingdomTaxesHoldingMultiplier") double kingdomTaxesHoldingMultiplier,
+                                        @Named("kingdomTaxesBaseCosts") double kingdomTaxesBaseCosts) {
         this.plugin = (JavaPlugin) plugin;
         this.kingdomController = kingdomController;
         this.commandKingdom = commandKingdom;
+        this.taxCollectingTask = taxCollectingTask;
         this.kingdomDefaultBalance = kingdomDefaultBalance;
         this.kingdomCostsClaim = kingdomCostsClaim;
         this.kingdomDefaultDescription = kingdomDefaultDescription;
+        this.kingdomTaxesEnabled = kingdomTaxesEnabled;
+        this.kingdomTaxesMemberMultiplier = kingdomTaxesMemberMultiplier;
+        this.kingdomTaxesHoldingMultiplier = kingdomTaxesHoldingMultiplier;
+        this.kingdomTaxesBaseCosts = kingdomTaxesBaseCosts;
     }
 
     @Override
     public void initialize() {
         plugin.getCommand("kingdom").setExecutor(commandKingdom);
+
+        if (kingdomTaxesEnabled) {
+            taxCollectingTaskFuture = executorService.scheduleAtFixedRate(taxCollectingTask, millisToNextHour(), TimeUnit.HOURS.toMillis(1), TimeUnit.MILLISECONDS);
+        }
     }
 
     @Override
     public void destroy() {
+        if (taxCollectingTaskFuture != null) {
+            taxCollectingTaskFuture.cancel(true);
+        }
+    }
 
+    @Override
+    public void processTaxCollection() {
+        kingdomController.getKingdoms(kingdoms -> {
+            for (Kingdom kingdom : kingdoms) {
+                processTaxCollection(kingdom);
+            }
+        });
     }
 
     @Override
@@ -172,6 +213,32 @@ public class FalloutSpigotApplicationImpl implements FalloutSpigotApplication {
                         });
                     });
                 });
+            });
+        });
+    }
+
+    private long millisToNextHour() {
+        LocalDateTime nextHour = LocalDateTime.now().plusHours(1).truncatedTo(ChronoUnit.HOURS);
+        return LocalDateTime.now().until(nextHour, ChronoUnit.MILLIS);
+    }
+
+    private void processTaxCollection(Kingdom kingdom) {
+        final double currentBalance = kingdom.getBalance();
+
+        final double[] currentCosts = {kingdomTaxesBaseCosts};
+
+        kingdomController.getKingdomMemberCount(kingdom.getUniqueId(), memberCount -> {
+            currentCosts[0] += kingdomTaxesMemberMultiplier * memberCount;
+
+            kingdomController.getKingdomHoldingCount(kingdom.getUniqueId(), holdingCount -> {
+                currentCosts[0] += kingdomTaxesHoldingMultiplier * holdingCount;
+
+                if (currentBalance >= currentCosts[0]) {
+                    // TODO: Process costs
+                    return;
+                }
+
+                // TODO: Taxes could not be paid
             });
         });
     }

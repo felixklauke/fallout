@@ -36,4 +36,10 @@ public interface KingdomController {
     void getKingdom(String worldName, int x, int z, Consumer<Kingdom> kingdomConsumer);
 
     void manipulateKingdomBalance(UUID uniqueId, double delta, Consumer<Boolean> consumer);
+
+    void getKingdoms(Consumer<Set<Kingdom>> consumer);
+
+    void getKingdomMemberCount(UUID kingdomUniqueId, Consumer<Integer> consumer);
+
+    void getKingdomHoldingCount(UUID kingdomUniqueId, Consumer<Integer> consumer);
 }

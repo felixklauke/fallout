@@ -20,4 +20,6 @@ public interface FalloutSpigotApplication {
     void handleKingdomLeavePerformed(Player player);
 
     void handleKingdomClaimPerformed(Player player);
+
+    void processTaxCollection();
 }
